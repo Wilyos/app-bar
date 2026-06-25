@@ -109,6 +109,7 @@ export const AdminPanel: React.FC = () => {
       <button 
         onClick={handleLogout}
         className="btn btn-secondary mt-8 w-full flex items-center justify-center gap-2"
+        style={{ borderColor: 'var(--secondary-color)', color: 'var(--text-main)' }}
       >
         <LogOut size={18} /> Cerrar Sesión
       </button>

@@ -60,10 +60,10 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const badges = [
-    { id: 'nuevo_cliente', name: "Nuevo Cliente", icon: <Star size={24} color="#fff" /> },
-    { id: 'cliente_frecuente', name: "Cliente Frecuente", icon: <Award size={24} color="#fff" /> },
-    { id: 'leyenda_del_bar', name: "Leyenda del Bar", icon: <Trophy size={24} color="#fff" /> },
+  const badges: { id: string; name: string; icon: React.ReactNode; theme: 'primary' | 'secondary' | 'accent' }[] = [
+    { id: 'nuevo_cliente', name: "Nuevo Cliente", icon: <Star size={24} color="#fff" />, theme: 'primary' },
+    { id: 'cliente_frecuente', name: "Cliente Frecuente", icon: <Award size={24} color="#fff" />, theme: 'secondary' },
+    { id: 'leyenda_del_bar', name: "Leyenda del Bar", icon: <Trophy size={24} color="#fff" />, theme: 'accent' },
   ];
 
   return (
@@ -90,15 +90,15 @@ export const Dashboard: React.FC = () => {
       </header>
 
       {/* Stats Card */}
-      <section className="card mb-8">
+      <section className="card mb-8" style={{ borderTop: '4px solid var(--secondary-color)' }}>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <Trophy size={24} className="text-primary" />
+            <Trophy size={24} className="text-[var(--secondary-color)]" />
             <span className="text-h3">Nivel Actual</span>
           </div>
           <div className="flex items-center gap-2 bg-[#2b303b] px-3 py-1 rounded-full">
-            <Coins size={16} className="text-[#94C11F]" />
-            <span className="font-semibold text-[#94C11F]">{userData?.coins || 0}</span>
+            <Coins size={16} className="text-[var(--accent-color)]" />
+            <span className="font-semibold text-[var(--accent-color)]">{userData?.coins || 0}</span>
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export const Dashboard: React.FC = () => {
       {/* Badges Section */}
       <section>
         <h2 className="text-h3 mb-4 flex items-center gap-2">
-          <Award size={20} className="text-primary" />
+          <Award size={20} className="text-[var(--primary-color)]" />
           Tus Insignias
         </h2>
         <div className="grid grid-cols-2 gap-4">
@@ -128,6 +128,7 @@ export const Dashboard: React.FC = () => {
                 name={badge.name}
                 icon={badge.icon}
                 locked={!hasBadge}
+                colorTheme={badge.theme}
               />
             );
           })}

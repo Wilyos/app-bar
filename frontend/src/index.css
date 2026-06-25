@@ -306,3 +306,58 @@ body {
 .animate-pulse {
   animation: pulse 2s infinite;
 }
+
+/* HTML5 QR Scanner Custom Styles */
+#reader {
+  width: 100%;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+#reader__dashboard_section_csr span {
+  color: var(--text-main) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+#reader button {
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color)) !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  margin: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+#reader button:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+}
+
+#reader select {
+  background-color: var(--surface-color) !important;
+  color: white !important;
+  border: 1px solid var(--border-color) !important;
+  padding: 8px !important;
+  border-radius: 8px !important;
+  margin: 5px !important;
+  outline: none !important;
+}
+
+#reader a {
+  color: var(--accent-color) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+#reader__scan_region {
+  background-color: rgba(0,0,0,0.5) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+#reader video {
+  border-radius: 12px !important;
+}

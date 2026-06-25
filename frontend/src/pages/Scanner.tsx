@@ -95,7 +95,7 @@ export const Scanner: React.FC = () => {
         </p>
 
         {!scanned ? (
-          <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-[0_0_30px_rgba(230,0,126,0.3)] border-2 border-[var(--primary-color)] bg-white">
+          <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-[0_0_30px_var(--primary-transparent)] border-2 border-[var(--primary-color)]">
             {/* HTML5 QR Code injects its own UI here, including file upload */}
             <div id="reader" className="w-full"></div>
           </div>

@@ -6,9 +6,21 @@ interface BadgeProps {
   icon: React.ReactNode;
   locked?: boolean;
   className?: string;
+  colorTheme?: 'primary' | 'secondary' | 'accent';
 }
 
-export const Badge: React.FC<BadgeProps> = ({ name, icon, locked = false, className }) => {
+export const Badge: React.FC<BadgeProps> = ({ name, icon, locked = false, className, colorTheme = 'primary' }) => {
+  const getColors = () => {
+    switch(colorTheme) {
+      case 'secondary': return { main: 'var(--secondary-color)', glow: 'rgba(102, 35, 131, 0.2)' };
+      case 'accent': return { main: 'var(--accent-color)', glow: 'rgba(148, 193, 31, 0.2)' };
+      case 'primary':
+      default: return { main: 'var(--primary-color)', glow: 'var(--primary-transparent)' };
+    }
+  };
+
+  const theme = getColors();
+
   return (
     <div 
       className={cn(
@@ -18,8 +30,8 @@ export const Badge: React.FC<BadgeProps> = ({ name, icon, locked = false, classN
         className
       )}
       style={{
-        border: locked ? '1px dashed var(--border-color)' : '1px solid var(--primary-color)',
-        background: locked ? 'var(--surface-color)' : 'var(--primary-transparent)',
+        border: locked ? '1px dashed var(--border-color)' : `1px solid ${theme.main}`,
+        background: locked ? 'var(--surface-color)' : theme.glow,
       }}
     >
       <div className={cn(
@@ -27,12 +39,12 @@ export const Badge: React.FC<BadgeProps> = ({ name, icon, locked = false, classN
         !locked && "animate-pulse"
       )}
       style={{
-        background: locked ? 'var(--bg-color)' : 'linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%)',
-        boxShadow: locked ? 'none' : '0 0 15px var(--primary-transparent)'
+        background: locked ? 'var(--bg-color)' : `linear-gradient(135deg, ${theme.main} 0%, rgba(255,255,255,0.2) 100%)`,
+        boxShadow: locked ? 'none' : `0 0 15px ${theme.glow}`
       }}>
         {icon}
       </div>
-      <span className="text-body font-semibold text-center" style={{ color: locked ? 'var(--text-muted)' : 'var(--primary-color)' }}>
+      <span className="text-body font-semibold text-center" style={{ color: locked ? 'var(--text-muted)' : theme.main }}>
         {name}
       </span>
     </div>
