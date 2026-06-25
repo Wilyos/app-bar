@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, LogIn } from 'lucide-react';
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export const NotFound: React.FC = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   return (
     <div 

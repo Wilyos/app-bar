@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { LogOut, RefreshCcw, Tag, DollarSign } from 'lucide-react';
 import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'points' | 'promo'>('points');
@@ -13,6 +13,15 @@ export const AdminPanel: React.FC = () => {
   const [qrData, setQrData] = useState<string | null>(null);
   const [qrMeta, setQrMeta] = useState<any>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   // Calcula XP y Monedas basado en el valor facturado
   const numericValue = parseFloat(invoiceValue) || 0;
