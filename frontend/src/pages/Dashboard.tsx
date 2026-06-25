@@ -94,6 +94,33 @@ export const Dashboard: React.FC = () => {
 
   const activePromos = (userData?.promos || []).filter((p: any) => p.status === 'active');
 
+  // Funciones de cálculo de Nivel
+  const getLevelInfo = (totalXp: number) => {
+    let level = 1;
+    let currentLevelStartXp = 0;
+    let nextLevelXpReq = 500; // XP needed to complete level 1
+    let totalXpNeededForNextLevel = 500;
+
+    while (totalXp >= totalXpNeededForNextLevel) {
+      level++;
+      currentLevelStartXp = totalXpNeededForNextLevel;
+      nextLevelXpReq = Math.floor(nextLevelXpReq * 1.5); // Aumenta 50%
+      totalXpNeededForNextLevel = currentLevelStartXp + nextLevelXpReq;
+    }
+
+    let title = "";
+    if (level >= 1 && level <= 5) title = "Novato del Shot";
+    else if (level >= 6 && level <= 10) title = "Aguanta una Prenda";
+    else if (level >= 11 && level <= 15) title = "Garganta de Lata";
+    else title = "Leyenda Indiscutible";
+
+    const xpInCurrentLevel = totalXp - currentLevelStartXp;
+    
+    return { level, title, xpInCurrentLevel, nextLevelXpReq };
+  };
+
+  const levelInfo = getLevelInfo(userData?.xp || 0);
+
   return (
     <div className="glass-panel flex flex-col min-h-screen p-6 animate-slide-up relative">
       {/* Header */}
@@ -120,9 +147,12 @@ export const Dashboard: React.FC = () => {
       {/* Stats Card */}
       <section className="card mb-8" style={{ borderTop: '4px solid var(--secondary-color)' }}>
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
-            <Trophy size={24} className="text-[var(--secondary-color)]" />
-            <span className="text-h3">Nivel Actual</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Trophy size={24} className="text-[var(--secondary-color)]" />
+              <span className="text-h3">Nivel {levelInfo.level}</span>
+            </div>
+            <span className="text-sm font-bold text-[var(--primary-color)]">{levelInfo.title}</span>
           </div>
           <div className="flex items-center gap-2 bg-[#2b303b] px-3 py-1 rounded-full">
             <Coins size={16} className="text-[var(--accent-color)]" />
@@ -131,8 +161,8 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <ProgressBar 
-          current={userData?.xp || 0} 
-          max={500} 
+          current={levelInfo.xpInCurrentLevel} 
+          max={levelInfo.nextLevelXpReq} 
           label={`Visitas totales: ${userData?.visits || 0}`}
           className="mb-2"
         />

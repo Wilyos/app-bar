@@ -79,18 +79,18 @@ export const AdminPanel: React.FC = () => {
       <main className="flex-1 flex flex-col items-center">
         {!qrData ? (
           <div className="w-full max-w-sm">
-            <div className="flex bg-[#1a1d24] rounded-lg p-1 mb-6 border border-[#2b303b]">
+            <div className="flex bg-[#0d0f12] rounded-xl p-1 mb-6 border border-[#2b303b] shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
               <button 
                 onClick={() => setActiveTab('points')}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md flex items-center justify-center gap-2 transition-all ${activeTab === 'points' ? 'bg-[#2b303b] text-white shadow-sm' : 'text-muted hover:text-white'}`}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all duration-300 ${activeTab === 'points' ? 'bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] text-white shadow-[0_0_15px_var(--primary-transparent)]' : 'text-muted hover:text-white hover:bg-white/5'}`}
               >
-                <DollarSign size={16} /> Factura
+                <DollarSign size={18} /> Generar Puntos
               </button>
               <button 
                 onClick={() => setActiveTab('promo')}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md flex items-center justify-center gap-2 transition-all ${activeTab === 'promo' ? 'bg-[#2b303b] text-white shadow-sm' : 'text-muted hover:text-white'}`}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all duration-300 ${activeTab === 'promo' ? 'bg-gradient-to-r from-[var(--secondary-color)] to-[var(--accent-color)] text-white shadow-[0_0_15px_rgba(148,193,31,0.3)]' : 'text-muted hover:text-white hover:bg-white/5'}`}
               >
-                <Tag size={16} /> Promoción
+                <Tag size={18} /> Crear Promo
               </button>
             </div>
 
