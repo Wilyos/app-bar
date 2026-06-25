@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Star, Award, Coins, QrCode, LogOut } from 'lucide-react';
+import { Trophy, Star, Award, Coins, QrCode, LogOut, Tag, X, Check } from 'lucide-react';
 import { ProgressBar } from '../components/ProgressBar';
 import { Badge } from '../components/Badge';
 import { auth } from '../firebase';
@@ -10,6 +10,10 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  
+  // Promo Modal state
+  const [selectedPromo, setSelectedPromo] = useState<any>(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -18,32 +22,60 @@ export const Dashboard: React.FC = () => {
         return;
       }
 
-      try {
-        // Fetch user data from our backend
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/users/${user.uid}`);
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
-        } else if (response.status === 404) {
-          // If user doesn't exist in backend, send them to Register page
-          navigate('/register');
-          return;
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      } finally {
-        setLoading(false);
-      }
+      fetchUserData(user.uid);
     });
 
     return () => unsubscribe();
   }, [navigate]);
 
+  const fetchUserData = async (uid: string) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/users/${uid}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+      } else if (response.status === 404) {
+        navigate('/register');
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     signOut(auth).then(() => {
       navigate('/login');
     });
+  };
+
+  const handleRedeemPromo = async () => {
+    if (!selectedPromo || !userData?.id) return;
+    setIsRedeeming(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/users/promos/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userData.id, promoId: selectedPromo.id })
+      });
+      
+      if (response.ok) {
+        alert("¡Promoción validada correctamente!");
+        setSelectedPromo(null);
+        // Refetch user data to update the UI
+        fetchUserData(userData.id);
+      } else {
+        const data = await response.json();
+        alert(data.error || "Error al validar la promoción");
+      }
+    } catch (error) {
+      alert("Error de conexión");
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   if (loading) {
@@ -59,6 +91,8 @@ export const Dashboard: React.FC = () => {
     { id: 'cliente_frecuente', name: "Cliente Frecuente", icon: <Award size={24} color="#fff" />, theme: 'secondary' },
     { id: 'leyenda_del_bar', name: "Leyenda del Bar", icon: <Trophy size={24} color="#fff" />, theme: 'accent' },
   ];
+
+  const activePromos = (userData?.promos || []).filter((p: any) => p.status === 'active');
 
   return (
     <div className="glass-panel flex flex-col min-h-screen p-6 animate-slide-up relative">
@@ -107,6 +141,38 @@ export const Dashboard: React.FC = () => {
         </p>
       </section>
 
+      {/* Promos Section */}
+      {activePromos.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-h3 mb-4 flex items-center gap-2">
+            <Tag size={20} className="text-[var(--secondary-color)]" />
+            Tus Promociones
+          </h2>
+          <div className="flex flex-col gap-3">
+            {activePromos.map((promo: any) => (
+              <div 
+                key={promo.id} 
+                onClick={() => setSelectedPromo(promo)}
+                className="bg-gradient-to-r from-[rgba(102,35,131,0.2)] to-[rgba(230,0,126,0.1)] border border-[var(--secondary-color)] rounded-xl p-4 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform shadow-[0_0_15px_rgba(102,35,131,0.2)]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[var(--secondary-color)] flex items-center justify-center">
+                    <Tag size={20} color="white" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold text-lg leading-tight">{promo.title}</h4>
+                    {promo.description && <p className="text-xs text-muted mt-1">{promo.description}</p>}
+                  </div>
+                </div>
+                <div className="text-[var(--secondary-color)] text-sm font-semibold">
+                  Usar &rarr;
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Badges Section */}
       <section>
         <h2 className="text-h3 mb-4 flex items-center gap-2">
@@ -144,6 +210,48 @@ export const Dashboard: React.FC = () => {
           Ir a Modo Mesero (Para pruebas)
         </button>
       </div>
+
+      {/* Promo Redemption Modal */}
+      {selectedPromo && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-scale-in">
+          <div className="bg-[#1a1d24] border-2 border-[var(--secondary-color)] rounded-2xl w-full max-w-sm p-6 relative flex flex-col items-center">
+            <button 
+              onClick={() => setSelectedPromo(null)}
+              className="absolute top-4 right-4 text-muted hover:text-white"
+            >
+              <X size={24} />
+            </button>
+            
+            <div className="w-16 h-16 rounded-full bg-[var(--secondary-color)] flex items-center justify-center mb-4 mt-2 shadow-[0_0_20px_rgba(102,35,131,0.5)]">
+              <Tag size={32} color="white" />
+            </div>
+            
+            <h3 className="text-2xl font-bold text-white text-center mb-2">{selectedPromo.title}</h3>
+            {selectedPromo.description && (
+              <p className="text-muted text-center mb-6">{selectedPromo.description}</p>
+            )}
+            
+            <div className="w-full bg-[#0d0f12] rounded-xl p-4 mb-6 border border-[#2b303b] flex flex-col items-center justify-center gap-2">
+              <span className="text-xs text-muted uppercase tracking-widest">Código Único</span>
+              <span className="text-3xl font-mono font-bold text-[var(--secondary-color)] tracking-wider">
+                {selectedPromo.id.substring(0, 8).toUpperCase()}
+              </span>
+            </div>
+            
+            <p className="text-center text-white font-medium mb-6">
+              ¡Muestra esta pantalla al mesero!
+            </p>
+            
+            <button 
+              onClick={handleRedeemPromo}
+              disabled={isRedeeming}
+              className="btn btn-primary w-full flex items-center justify-center gap-2"
+            >
+              {isRedeeming ? 'Validando...' : <><Check size={20} /> Marcar como Usado</>}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

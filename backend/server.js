@@ -109,6 +109,33 @@ app.post('/api/visits', async (req, res) => {
 });
 
 // QR Generation Endpoint (Called by Admin/Waiter)
+// QR Generation for Promos
+app.post('/api/qr/generate/promo', async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ error: "El título es requerido" });
+    }
+    
+    const qrRef = await db.collection('qr_codes').add({
+      type: 'promo',
+      title: title,
+      description: description || '',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    
+    res.json({
+      qrId: qrRef.id,
+      message: "QR de promoción generado exitosamente"
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// QR Generation Endpoint (Called by Admin/Waiter)
 app.post('/api/qr/generate', async (req, res) => {
   try {
     const { xp, coins } = req.body;
@@ -119,6 +146,7 @@ app.post('/api/qr/generate', async (req, res) => {
     
     // Create a new QR code document in Firestore
     const qrRef = await db.collection('qr_codes').add({
+      type: 'points',
       xp: Number(xp),
       coins: Number(coins),
       status: 'pending',
@@ -157,48 +185,89 @@ app.post('/api/qr/claim', async (req, res) => {
         throw new Error("Este código QR ya fue utilizado.");
       }
       
-      // Get or create User FIRST (Reads before Writes)
+      // Get User FIRST
       const userRef = db.collection('users').doc(userId);
       const userDoc = await t.get(userRef);
       
       let user;
       if (!userDoc.exists) {
-        user = {
-          id: userId,
-          name: "Cliente",
-          phone: "",
-          xp: 0,
-          coins: 0,
-          visits: 0,
-          badges: []
-        };
+        throw new Error("El usuario no existe. Por favor completa tu registro primero.");
       } else {
         user = userDoc.data();
       }
       
-      // Now perform all Writes
       // Update QR status so it can't be used again
       t.update(qrRef, { status: 'used', usedBy: userId, usedAt: new Date().toISOString() });
       
-      // Add points, coins, and increment visits
-      user.xp = (user.xp || 0) + qrData.xp;
-      user.coins = (user.coins || 0) + qrData.coins;
-      user.visits = (user.visits || 0) + 1;
-      
-      // Process gamification badges (leveling up)
-      const updatedUser = gamificationService.processVisit(user);
+      let updatedUser = { ...user };
+
+      if (qrData.type === 'promo') {
+        // Handle Promo Claim
+        const newPromo = {
+          id: qrId, // using qrId as unique identifier for this promo
+          title: qrData.title,
+          description: qrData.description,
+          status: 'active',
+          claimedAt: new Date().toISOString()
+        };
+        updatedUser.promos = [...(user.promos || []), newPromo];
+      } else {
+        // Handle Points Claim
+        updatedUser.xp = (user.xp || 0) + (qrData.xp || 0);
+        updatedUser.coins = (user.coins || 0) + (qrData.coins || 0);
+        updatedUser.visits = (user.visits || 0) + 1;
+        // Process gamification badges (leveling up)
+        updatedUser = gamificationService.processVisit(updatedUser);
+      }
       
       // Save updated user to Firestore
       t.set(userRef, updatedUser, { merge: true });
       
-      return updatedUser;
+      return { user: updatedUser, isPromo: qrData.type === 'promo' };
     });
     
     res.json({
-      message: "¡Experiencia y monedas reclamadas con éxito!",
-      user: result
+      message: result.isPromo ? "¡Promoción agregada a tus cartas!" : "¡Experiencia y monedas reclamadas con éxito!",
+      user: result.user
     });
     
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Redeem Promo Endpoint
+app.post('/api/users/promos/redeem', async (req, res) => {
+  try {
+    const { userId, promoId } = req.body;
+    
+    if (!userId || !promoId) {
+      return res.status(400).json({ error: "Faltan datos requeridos" });
+    }
+    
+    const result = await db.runTransaction(async (t) => {
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await t.get(userRef);
+      
+      if (!userDoc.exists) throw new Error("Usuario no encontrado");
+      
+      const user = userDoc.data();
+      const promos = user.promos || [];
+      const promoIndex = promos.findIndex(p => p.id === promoId && p.status === 'active');
+      
+      if (promoIndex === -1) {
+        throw new Error("La promoción no existe o ya fue utilizada");
+      }
+      
+      // Mark as used
+      promos[promoIndex].status = 'used';
+      promos[promoIndex].usedAt = new Date().toISOString();
+      
+      t.update(userRef, { promos });
+      return promos;
+    });
+    
+    res.json({ message: "¡Promoción validada correctamente!", promos: result });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -38,12 +38,12 @@ export const Scanner: React.FC = () => {
     
     try {
       const data = JSON.parse(text);
-      if (data.type === 'claim_points' && data.token) {
+      if ((data.type === 'claim_points' || data.type === 'claim_promo') && data.token) {
         setScanned(true);
         
         const user = auth.currentUser;
         if (!user) {
-          alert('Debes iniciar sesión para reclamar puntos.');
+          alert('Debes iniciar sesión para escanear códigos.');
           navigate('/login');
           return;
         }
