@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, CheckCircle } from 'lucide-react';
 import { Scanner as ReactQRScanner } from '@yudiel/react-qr-scanner';
+import { auth } from '../firebase';
 
 export const Scanner: React.FC = () => {
   const navigate = useNavigate();
