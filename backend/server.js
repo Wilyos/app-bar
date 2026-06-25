@@ -34,6 +34,43 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+// Register a new user manually
+app.post('/api/users/register', async (req, res) => {
+  try {
+    const { userId, name, phone } = req.body;
+    
+    if (!userId || !name) {
+      return res.status(400).json({ error: "Faltan datos requeridos (userId, name)" });
+    }
+    
+    const userRef = db.collection('users').doc(userId);
+    const doc = await userRef.get();
+    
+    if (doc.exists) {
+      return res.status(400).json({ error: "El usuario ya existe." });
+    }
+    
+    const newUser = {
+      id: userId,
+      name: name,
+      phone: phone || "",
+      xp: 0,
+      coins: 0,
+      visits: 0,
+      badges: []
+    };
+    
+    await userRef.set(newUser);
+    
+    res.json({
+      message: "Usuario registrado exitosamente",
+      user: newUser
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/visits', async (req, res) => {
   try {
     const { userId } = req.body;

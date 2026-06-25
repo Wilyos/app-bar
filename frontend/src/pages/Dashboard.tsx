@@ -26,15 +26,9 @@ export const Dashboard: React.FC = () => {
           const data = await response.json();
           setUserData(data);
         } else if (response.status === 404) {
-          // If user doesn't exist yet, we can show a welcome state or register them via a visit
-          setUserData({
-            id: user.uid,
-            name: "Nuevo Usuario",
-            xp: 0,
-            coins: 0,
-            visits: 0,
-            badges: []
-          });
+          // If user doesn't exist in backend, send them to Register page
+          navigate('/register');
+          return;
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
@@ -145,7 +139,7 @@ export const Dashboard: React.FC = () => {
       <div className="flex justify-center mt-6">
         <button 
           onClick={() => navigate('/admin')}
-          className="text-xs text-muted hover:text-white"
+          className="text-xs font-semibold px-4 py-2 rounded-full border border-[var(--border-color)] bg-[rgba(255,255,255,0.05)] text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] transition-colors flex items-center gap-2"
         >
           Ir a Modo Mesero (Para pruebas)
         </button>
