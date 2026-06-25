@@ -120,10 +120,7 @@ app.post('/api/qr/claim', async (req, res) => {
         throw new Error("Este código QR ya fue utilizado.");
       }
       
-      // Update QR status so it can't be used again
-      t.update(qrRef, { status: 'used', usedBy: userId, usedAt: new Date().toISOString() });
-      
-      // Get or create User
+      // Get or create User FIRST (Reads before Writes)
       const userRef = db.collection('users').doc(userId);
       const userDoc = await t.get(userRef);
       
@@ -141,6 +138,10 @@ app.post('/api/qr/claim', async (req, res) => {
       } else {
         user = userDoc.data();
       }
+      
+      // Now perform all Writes
+      // Update QR status so it can't be used again
+      t.update(qrRef, { status: 'used', usedBy: userId, usedAt: new Date().toISOString() });
       
       // Add points, coins, and increment visits
       user.xp = (user.xp || 0) + qrData.xp;
