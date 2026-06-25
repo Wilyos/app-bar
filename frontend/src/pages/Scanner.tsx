@@ -8,25 +8,46 @@ export const Scanner: React.FC = () => {
   const [scanned, setScanned] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleScan = (text: string) => {
+  const handleScan = async (text: string) => {
     if (scanned || !text) return;
     
     try {
       const data = JSON.parse(text);
       if (data.type === 'claim_points' && data.token) {
         setScanned(true);
-        // Simulate API validation
-        setSuccessMessage('¡Puntos y Monedas reclamados con éxito!');
         
-        // Wait and redirect to dashboard
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2500);
+        const user = auth.currentUser;
+        if (!user) {
+          alert('Debes iniciar sesión para reclamar puntos.');
+          navigate('/login');
+          return;
+        }
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiUrl}/api/qr/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qrId: data.token, userId: user.uid })
+        });
+        
+        const result = await response.json();
+
+        if (response.ok) {
+          setSuccessMessage(result.message);
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2500);
+        } else {
+          setSuccessMessage('Error: ' + result.error);
+          setTimeout(() => {
+            setScanned(false);
+          }, 3000);
+        }
       } else {
         alert('Código QR no válido para esta aplicación.');
       }
     } catch (e) {
-      alert('Formato de QR inválido.');
+      // Ignore non-JSON parsing errors if scanner reads something else
     }
   };
 

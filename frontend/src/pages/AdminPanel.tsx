@@ -15,14 +15,29 @@ export const AdminPanel: React.FC = () => {
   const xpAmount = Math.floor(numericValue * 0.001);
   const coinsAmount = Math.floor(numericValue * 0.0001);
 
-  const handleGenerate = (e: React.FormEvent) => {
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (numericValue <= 0) return;
     
-    // Simulate hitting backend to get a unique token
-    const token = `qr_${Date.now()}_xp${xpAmount}_coins${coinsAmount}`;
-    const payload = JSON.stringify({ type: 'claim_points', token });
-    setQrData(payload);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/qr/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ xp: xpAmount, coins: coinsAmount })
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        const payload = JSON.stringify({ type: 'claim_points', token: data.qrId });
+        setQrData(payload);
+      } else {
+        alert("Error al generar QR: " + data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión con el servidor");
+    }
   };
 
   const handleLogout = async () => {

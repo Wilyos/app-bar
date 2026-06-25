@@ -71,6 +71,101 @@ app.post('/api/visits', async (req, res) => {
   }
 });
 
+// QR Generation Endpoint (Called by Admin/Waiter)
+app.post('/api/qr/generate', async (req, res) => {
+  try {
+    const { xp, coins } = req.body;
+    
+    if (!xp || !coins) {
+      return res.status(400).json({ error: "Se requieren XP y monedas" });
+    }
+    
+    // Create a new QR code document in Firestore
+    const qrRef = await db.collection('qr_codes').add({
+      xp: Number(xp),
+      coins: Number(coins),
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    
+    res.json({
+      qrId: qrRef.id,
+      message: "QR generado exitosamente"
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// QR Claim Endpoint (Called by Customer Scanner)
+app.post('/api/qr/claim', async (req, res) => {
+  try {
+    const { qrId, userId } = req.body;
+    
+    if (!qrId || !userId) {
+      return res.status(400).json({ error: "Faltan datos requeridos (qrId o userId)" });
+    }
+    
+    // Transaction to ensure atomic operation (prevent double claiming)
+    const result = await db.runTransaction(async (t) => {
+      const qrRef = db.collection('qr_codes').doc(qrId);
+      const qrDoc = await t.get(qrRef);
+      
+      if (!qrDoc.exists) {
+        throw new Error("Código QR no encontrado en el sistema.");
+      }
+      
+      const qrData = qrDoc.data();
+      if (qrData.status !== 'pending') {
+        throw new Error("Este código QR ya fue utilizado.");
+      }
+      
+      // Update QR status so it can't be used again
+      t.update(qrRef, { status: 'used', usedBy: userId, usedAt: new Date().toISOString() });
+      
+      // Get or create User
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await t.get(userRef);
+      
+      let user;
+      if (!userDoc.exists) {
+        user = {
+          id: userId,
+          name: "Cliente",
+          phone: "",
+          xp: 0,
+          coins: 0,
+          visits: 0,
+          badges: []
+        };
+      } else {
+        user = userDoc.data();
+      }
+      
+      // Add points, coins, and increment visits
+      user.xp = (user.xp || 0) + qrData.xp;
+      user.coins = (user.coins || 0) + qrData.coins;
+      user.visits = (user.visits || 0) + 1;
+      
+      // Process gamification badges (leveling up)
+      const updatedUser = gamificationService.processVisit(user);
+      
+      // Save updated user to Firestore
+      t.set(userRef, updatedUser, { merge: true });
+      
+      return updatedUser;
+    });
+    
+    res.json({
+      message: "¡Experiencia y monedas reclamadas con éxito!",
+      user: result
+    });
+    
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
