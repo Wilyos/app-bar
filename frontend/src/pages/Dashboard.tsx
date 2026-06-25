@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Star, Award, Coins, QrCode, LogOut, Tag, X, Check } from 'lucide-react';
+import { Trophy, Star, Award, Coins, QrCode, LogOut, Tag, X, Check, Zap, Sparkles, Crown } from 'lucide-react';
 import { ProgressBar } from '../components/ProgressBar';
 import { Badge } from '../components/Badge';
 import { auth } from '../firebase';
@@ -89,7 +89,10 @@ export const Dashboard: React.FC = () => {
   const badges: { id: string; name: string; icon: React.ReactNode; theme: 'primary' | 'secondary' | 'accent' }[] = [
     { id: 'nuevo_cliente', name: "Nuevo Cliente", icon: <Star size={24} color="#fff" />, theme: 'primary' },
     { id: 'cliente_frecuente', name: "Cliente Frecuente", icon: <Award size={24} color="#fff" />, theme: 'secondary' },
-    { id: 'leyenda_del_bar', name: "Leyenda del Bar", icon: <Trophy size={24} color="#fff" />, theme: 'accent' },
+    { id: 'entusiasta', name: "Entusiasta", icon: <Zap size={24} color="#fff" />, theme: 'accent' },
+    { id: 'popular', name: "Popular", icon: <Sparkles size={24} color="#fff" />, theme: 'primary' },
+    { id: 'estrella_de_la_noche', name: "Estrella de la noche", icon: <Star size={24} color="#fff" />, theme: 'secondary' },
+    { id: 'rey_de_la_noche', name: "Rey de la noche", icon: <Crown size={24} color="#fff" />, theme: 'accent' },
   ];
 
   const activePromos = (userData?.promos || []).filter((p: any) => p.status === 'active');
@@ -120,6 +123,25 @@ export const Dashboard: React.FC = () => {
   };
 
   const levelInfo = getLevelInfo(userData?.xp || 0);
+
+  // Determinar qué insignias mostrar (ganadas + 1 bloqueada para misterio)
+  const visibleBadges = [];
+  let foundLocked = false;
+
+  for (const badge of badges) {
+    const hasBadge = userData?.badges?.includes(badge.id);
+    if (hasBadge) {
+      visibleBadges.push({ ...badge, locked: false });
+    } else if (!foundLocked) {
+      // Si la insignia es el "rey de la noche" no le quitemos el misterio al icono real
+      visibleBadges.push({ 
+        ...badge, 
+        locked: true,
+        name: "???", // Misterio
+      });
+      foundLocked = true;
+    }
+  }
 
   return (
     <div className="glass-panel flex flex-col min-h-screen p-6 animate-slide-up relative">
@@ -210,18 +232,15 @@ export const Dashboard: React.FC = () => {
           Tus Insignias
         </h2>
         <div className="grid grid-cols-2 gap-4">
-          {badges.map(badge => {
-            const hasBadge = userData?.badges?.includes(badge.id);
-            return (
-              <Badge 
-                key={badge.id}
-                name={badge.name}
-                icon={badge.icon}
-                locked={!hasBadge}
-                colorTheme={badge.theme}
-              />
-            );
-          })}
+          {visibleBadges.map(badge => (
+            <Badge 
+              key={badge.id}
+              name={badge.name}
+              icon={badge.locked ? <Award size={24} color="#666" /> : badge.icon}
+              locked={badge.locked}
+              colorTheme={badge.theme}
+            />
+          ))}
         </div>
       </section>
 

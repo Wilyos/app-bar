@@ -6,7 +6,10 @@
 const BADGES_CONFIG = [
   { id: 'nuevo_cliente', name: 'Nuevo Cliente', requiredVisits: 1 },
   { id: 'cliente_frecuente', name: 'Cliente Frecuente', requiredVisits: 5 },
-  { id: 'leyenda_del_bar', name: 'Leyenda del Bar', requiredVisits: 20 }
+  {id: 'entusiasta', name: 'Entusiasta', requiredVisits:10},
+  {id: 'popular', name: 'Popular', requiredVisits:15},
+  {id: 'estrella_de_la_noche', name: 'Estrella de la noche', requiredVisits:20},
+  {id: 'rey_de_la_noche', name: 'Rey de la noche', requiredVisits: 50 }
 ];
 
 const XP_PER_VISIT = 50;
