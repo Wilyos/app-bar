@@ -80,8 +80,8 @@ export const AdminPanel: React.FC = () => {
           </form>
         ) : (
           <div className="flex flex-col items-center gap-6 mt-8">
-            <div className="bg-white p-6 rounded-2xl shadow-[0_0_30px_var(--primary-transparent)] animate-slide-up">
-              <QRCodeSVG value={qrData} size={250} />
+            <div className="bg-white p-4 rounded-2xl shadow-[0_0_30px_var(--primary-transparent)] animate-slide-up">
+              <QRCodeSVG value={qrData} size={250} includeMargin={true} />
             </div>
             <p className="text-center text-lg text-white font-medium">
               Muestra este código al cliente

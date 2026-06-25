@@ -14,7 +14,7 @@ export const Scanner: React.FC = () => {
 
     const scanner = new Html5QrcodeScanner(
       "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      { fps: 10 },
       /* verbose= */ false
     );
 
