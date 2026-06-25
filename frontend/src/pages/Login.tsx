@@ -16,13 +16,21 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        navigate('/dashboard');
+      }
+    });
+
     // We need to set up the Recaptcha Verifier once the component mounts
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
       });
     }
-  }, []);
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();

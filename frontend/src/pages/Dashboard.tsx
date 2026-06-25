@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Star, Award, Coins, QrCode, LogOut, Tag, X, Check, Zap, Sparkles, Crown } from 'lucide-react';
+import { Trophy, Star, Award, Coins, QrCode, LogOut, Tag, X, Zap, Sparkles, Crown } from 'lucide-react';
 import { ProgressBar } from '../components/ProgressBar';
 import { Badge } from '../components/Badge';
 import { auth } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { QRCodeSVG } from 'qrcode.react';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,6 @@ export const Dashboard: React.FC = () => {
   
   // Promo Modal state
   const [selectedPromo, setSelectedPromo] = useState<any>(null);
-  const [isRedeeming, setIsRedeeming] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -49,33 +49,6 @@ export const Dashboard: React.FC = () => {
     signOut(auth).then(() => {
       navigate('/login');
     });
-  };
-
-  const handleRedeemPromo = async () => {
-    if (!selectedPromo || !userData?.id) return;
-    setIsRedeeming(true);
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/users/promos/redeem`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userData.id, promoId: selectedPromo.id })
-      });
-      
-      if (response.ok) {
-        alert("¡Promoción validada correctamente!");
-        setSelectedPromo(null);
-        // Refetch user data to update the UI
-        fetchUserData(userData.id);
-      } else {
-        const data = await response.json();
-        alert(data.error || "Error al validar la promoción");
-      }
-    } catch (error) {
-      alert("Error de conexión");
-    } finally {
-      setIsRedeeming(false);
-    }
   };
 
   if (loading) {
@@ -251,7 +224,7 @@ export const Dashboard: React.FC = () => {
         <LogOut size={18} /> Cerrar Sesión
       </button>
 
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-6 mb-10">
         <button 
           onClick={() => navigate('/admin')}
           className="text-xs font-semibold px-4 py-2 rounded-full border border-[var(--border-color)] bg-[rgba(255,255,255,0.05)] text-[var(--text-muted)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] transition-colors flex items-center gap-2"
@@ -271,33 +244,28 @@ export const Dashboard: React.FC = () => {
               <X size={24} />
             </button>
             
-            <div className="w-16 h-16 rounded-full bg-[var(--secondary-color)] flex items-center justify-center mb-4 mt-2 shadow-[0_0_20px_rgba(102,35,131,0.5)]">
-              <Tag size={32} color="white" />
-            </div>
-            
-            <h3 className="text-2xl font-bold text-white text-center mb-2">{selectedPromo.title}</h3>
+            <h3 className="text-2xl font-bold text-white text-center mb-2 mt-4">{selectedPromo.title}</h3>
             {selectedPromo.description && (
               <p className="text-muted text-center mb-6">{selectedPromo.description}</p>
             )}
-            
-            <div className="w-full bg-[#0d0f12] rounded-xl p-4 mb-6 border border-[#2b303b] flex flex-col items-center justify-center gap-2">
-              <span className="text-xs text-muted uppercase tracking-widest">Código Único</span>
-              <span className="text-3xl font-mono font-bold text-[var(--secondary-color)] tracking-wider">
-                {selectedPromo.id.substring(0, 8).toUpperCase()}
-              </span>
+
+            <div className="bg-white p-3 rounded-xl mb-6 shadow-[0_0_20px_rgba(102,35,131,0.5)]">
+              <QRCodeSVG 
+                value={JSON.stringify({ 
+                  type: 'redeem_promo', 
+                  userId: userData.id, 
+                  promoId: selectedPromo.id 
+                })} 
+                size={200} 
+              />
             </div>
             
-            <p className="text-center text-white font-medium mb-6">
-              ¡Muestra esta pantalla al mesero!
+            <p className="text-center text-white font-medium mb-2">
+              ¡Muestra este código al mesero!
             </p>
-            
-            <button 
-              onClick={handleRedeemPromo}
-              disabled={isRedeeming}
-              className="btn btn-primary w-full flex items-center justify-center gap-2"
-            >
-              {isRedeeming ? 'Validando...' : <><Check size={20} /> Marcar como Usado</>}
-            </button>
+            <p className="text-center text-xs text-muted">
+              Solo el personal del bar puede escanear este código para validar tu promoción.
+            </p>
           </div>
         </div>
       )}

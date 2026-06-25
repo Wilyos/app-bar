@@ -68,6 +68,29 @@ export const Scanner: React.FC = () => {
             setScanned(false);
           }, 3000);
         }
+      } else if (data.type === 'redeem_promo' && data.userId && data.promoId) {
+        // Escaneo de mesero para validar una promoción de cliente
+        setScanned(true);
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiUrl}/api/users/promos/redeem`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: data.userId, promoId: data.promoId })
+        });
+        
+        const result = await response.json();
+
+        if (response.ok) {
+          setSuccessMessage("¡Promo validada! Puedes entregar el premio.");
+          setTimeout(() => {
+            navigate('/admin');
+          }, 3000);
+        } else {
+          setSuccessMessage('Error: ' + result.error);
+          setTimeout(() => {
+            setScanned(false);
+          }, 3000);
+        }
       } else {
         alert('Código QR no válido para esta aplicación.');
         setScanned(false);
